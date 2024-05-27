@@ -33,7 +33,7 @@ setup(
     name='TaxCalculator',
     version=__version__,
     author='A B',
-    install_requires=['pybind11', 'pandas', 'numpy'],
+    install_requires=['pandas', 'numpy'],
     ext_modules=ext_modules,
     # cmdclass={'build_ext': build_ext},
     include_package_data=True,
