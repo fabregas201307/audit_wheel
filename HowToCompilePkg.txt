@@ -1,0 +1,78 @@
+docker pull quay.io/pypa/manylinux2014_x86_64
+
+cd ~/Desktop/projects/audit_wheel
+docker run -it -v $(pwd):/io quay.io/pypa/manylinux2014_x86_64 /bin/bash
+
+
+# alternatively, we can run below
+docker run -it -d -v $(pwd):/io quay.io/pypa/manylinux2014_x86_64 /bin/bash
+# then lauch the docker, you can specify a custom detach key
+docker attach --detach-keys="ctrl-s" e7c0dfslkdfjksdasllkd
+# the terminal should know "# read escape sequence", and you can use 'docker container ls' to check that docker is still there.
+
+# to resume, first get container ID, then exec the container
+docker exec -it db958bbb96c /bin/bash
+# THEN you can use ctrl d
+
+
+export no_proxy=localhost
+export http_proxy=http://
+export https_proxy=http://
+
+yum update && yum install -y wget screen nana vim
+
+mkdir /opt/code
+cd /opt/code
+
+# first compile boost
+wget https://boostorg.jfrog.io/artifactory/main/release/1.85.0/source/boost_1_85_0.tar.bz2
+tar --bzip2 -xf boost_1_85_0.tar.bz2
+cd boost_1_85_0
+
+# better use screen
+screen
+# ctrl+A then D to detach
+# screen is to show
+# screen -r NUM to resume
+
+./bootstrap.sh
+./b2 install
+
+# then lib is here
+/opt/code/boost_1_85_0/stage/lib
+
+# then compile QL on linux
+cd /opt/code
+wget https://github.com/lballabio/QuantLib/releases/download/v1.34/QuantLib-1.34.tar.gz
+tar xzf QuantLib-1.34.tar.gz
+cd /opt/code/QuantLib-1.34
+
+# ./configure --with-boost-include=/home/foo/include
+./configure
+make
+make install
+
+# copy your pkg code to /io folder
+cd /io/TaxCalculator
+/opt/python/cp37-cp37m/bin/pip install auditwheel wheel numpy Cython==3.0.3 build setuptools_scm toml pybind11
+/opt/python/cp311-cp311m/bin/pip install auditwheel wheel numpy Cython==3.0.3 build setuptools_scm toml pybind11
+/opt/python/cp312-cp312m/bin/pip install auditwheel wheel numpy Cython==3.0.3 build setuptools_scm toml pybind11
+
+
+/opt/python/cp311-cp311/bin/python setup.py bdist_wheel
+/opt/python/cp311-cp311/bin/auditwheel repair dist/TaxCalculator-0.2.1-cp311-cp311-linux_x86_64.whl
+
+/opt/python/cp312-cp312/bin/python setup.py bdist_wheel
+/opt/python/cp312-cp312/bin/auditwheel repair dist/TaxCalculator-0.2.1-cp312-cp312-linux_x86_64.whl
+
+
+/opt/python/cp37-cp37m/bin/python setup.py bdist_wheel
+/opt/python/cp37-cp37m/bin/auditwheel repair dist/TaxCalculator-0.2.1-cp37-cp37m-linux_x86_64.whl
+
+
+# then in windows, need to copy the quantlib lib to corresponding path. No, you just need to use \ in path, AND ALSO rename the quantlib-x64-mt.lib to quantlib.lib
+# can build, then
+python setup.py bdist_wheel
+c:\bin\Miniconda3\envs\py311\Scripts\delvewheel.exe repair dist\TaxCalculator-0.2.0-cp311-cp311-win_amd64.whl --add-path C:\bin\miniconda3\envs\py311\Lib\site-packages;C:\bin\miniconda3\envs\py311\Lib\site-packages\numpy\DLLs
+c:\bin\Miniconda3\envs\py312\Scripts\delvewheel.exe repair dist\TaxCalculator-0.2.0-cp312-cp312-win_amd64.whl --add-path C:\bin\miniconda3\envs\py312\Lib\site-packages;C:\bin\miniconda3\envs\py312\Lib\site-packages\numpy\DLLs
+c:\bin\Miniconda3\envs\py37\Scripts\delvewheel.exe repair dist\TaxCalculator-0.2.0-cp37-cp37-win_amd64.whl --add-path C:\bin\miniconda3\envs\py37\Lib\site-packages;C:\bin\miniconda3\envs\py37\Lib\site-packages\numpy\DLLs
